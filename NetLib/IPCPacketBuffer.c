@@ -44,6 +44,7 @@ Void* IPCPacketBufferAppend(
     IPCPacketBufferRef PacketBuffer,
     Index Length
 ) {
+    if (Length < 1) return NULL;
     IPCPacketRef Packet = (IPCPacketRef)MemoryBufferGetMemory(PacketBuffer->MemoryBuffer, 0);
     Void* Memory = MemoryBufferAppend(PacketBuffer->MemoryBuffer, Length);
     Packet->Length += Length;
@@ -55,6 +56,7 @@ Void* IPCPacketBufferAppendCopy(
     Void* Source,
     Index Length
 ) {
+    if (Length < 1) return NULL;
     Void* Memory = IPCPacketBufferAppend(PacketBuffer, Length);
     memcpy(Memory, Source, Length);
     return Memory;
@@ -80,4 +82,10 @@ Void IPCPacketLogBytes(
     }
 
     fprintf(stdout, "\n");
+}
+
+MemoryBufferRef IPCPacketBufferGetMemoryBuffer(
+    IPCPacketBufferRef PacketBuffer
+) {
+    return PacketBuffer->MemoryBuffer;
 }

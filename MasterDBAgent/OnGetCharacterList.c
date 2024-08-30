@@ -1,47 +1,49 @@
-#include "MasterDB.h"
 #include "IPCProtocol.h"
 #include "IPCProcedures.h"
 
 IPC_PROCEDURE_BINDING(W2D, GET_CHARACTER_LIST) {
-	MASTERDB_DATA_ACCOUNT Account = { 0 };
-	Account.AccountID = Packet->AccountID;
-	if (!MasterDBGetOrCreateAccount(Context->Database, Packet->AccountID, &Account)) goto error;
-
 	IPC_D2W_DATA_GET_CHARACTER_LIST* Response = IPCPacketBufferInit(Connection->PacketBuffer, D2W, GET_CHARACTER_LIST);
 	Response->Header.Source = Server->IPCSocket->NodeID;
 	Response->Header.Target = Packet->Header.Source;
 	Response->Header.TargetConnectionID = Packet->Header.SourceConnectionID;
-	Response->AccountInfo = Account.AccountInfo;
 
-	StatementRef Statement = MasterDBSelectCharacterIndexByAccount(
+	DatabaseHandleRef Handle = DatabaseCallProcedureFetch(
 		Context->Database,
-		Packet->AccountID
+		"GetCharacterList",
+		DB_INPUT_INT32(Packet->AccountID),
+		DB_PARAM_END
 	);
-	if (!Statement) goto error;
 
-	Int32 Index = 0;
-	MASTERDB_DATA_CHARACTER_INDEX CharacterIndex = { 0 };
-	while (MasterDBSelectCharacterIndexFetchNext(Context->Database, Statement, &CharacterIndex)) {
-		assert(Index < MAX_CHARACTER_COUNT);
-
-		Response->Characters[CharacterIndex.Index].ID = CharacterIndex.CharacterID;
-		Response->Characters[CharacterIndex.Index].CreationDate = CharacterIndex.CreatedAt;
-		Response->Characters[CharacterIndex.Index].Style = CharacterIndex.CharacterData.Style.RawValue;
-		Response->Characters[CharacterIndex.Index].Level = CharacterIndex.CharacterData.Basic.Level;
-		Response->Characters[CharacterIndex.Index].OverlordLevel = CharacterIndex.OverlordMasteryInfo.Info.Level;
-		Response->Characters[CharacterIndex.Index].SkillRank = CharacterIndex.CharacterData.Skill.Rank;
-		Response->Characters[CharacterIndex.Index].NationMask = CharacterIndex.CharacterData.Profile.Nation;
-		CStringCopySafe(Response->Characters[CharacterIndex.Index].Name, MAX_CHARACTER_NAME_LENGTH + 1, CharacterIndex.Name);
-		Response->Characters[CharacterIndex.Index].HonorPoint = CharacterIndex.CharacterData.Honor.Point;
-		Response->Characters[CharacterIndex.Index].Alz = CharacterIndex.CharacterData.Alz;
-		Response->Characters[CharacterIndex.Index].MapID = CharacterIndex.CharacterData.Position.WorldID;
-		Response->Characters[CharacterIndex.Index].PositionX = CharacterIndex.CharacterData.Position.X;
-		Response->Characters[CharacterIndex.Index].PositionY = CharacterIndex.CharacterData.Position.Y;
-		Response->Characters[CharacterIndex.Index].EquipmentCount = CharacterIndex.EquipmentData.Info.EquipmentSlotCount;
-		memcpy(Response->Characters[CharacterIndex.Index].Equipment, CharacterIndex.EquipmentData.EquipmentSlots, sizeof(struct _RTItemSlot) * CharacterIndex.EquipmentData.Info.EquipmentSlotCount);
-
-		Index += 1;
-		memset(&CharacterIndex, 0, sizeof(MASTERDB_DATA_CHARACTER_INDEX));
+	UInt8 CharacterSlotIndex = 0;
+	IPC_DATA_CHARACTER_INFO CharacterInfo = { 0 };
+	while (DatabaseHandleReadNext(
+		Handle,
+		DB_TYPE_UINT8, &CharacterSlotIndex,
+		DB_TYPE_INT32, &CharacterInfo.CharacterID,
+		DB_TYPE_UINT64, &CharacterInfo.CreationDate,
+		DB_TYPE_INT32, &CharacterInfo.Style,
+		DB_TYPE_INT32, &CharacterInfo.Level,
+		DB_TYPE_INT16, &CharacterInfo.OverlordLevel,
+		DB_TYPE_INT32, &CharacterInfo.MythRebirth,
+		DB_TYPE_INT32, &CharacterInfo.MythHolyPower,
+		DB_TYPE_INT32, &CharacterInfo.MythLevel,
+		DB_TYPE_INT32, &CharacterInfo.SkillRank,
+		DB_TYPE_UINT8, &CharacterInfo.NationMask,
+		DB_TYPE_STRING, CharacterInfo.Name, sizeof(CharacterInfo.Name),
+		DB_TYPE_INT64, &CharacterInfo.HonorPoint,
+		DB_TYPE_INT32, &CharacterInfo.CostumeActivePageIndex,
+		DB_TYPE_DATA, &CharacterInfo.CostumeAppliedSlots, sizeof(CharacterInfo.CostumeAppliedSlots),
+		DB_TYPE_INT64, &CharacterInfo.Currency,
+		DB_TYPE_UINT8, &CharacterInfo.WorldIndex,
+		DB_TYPE_INT16, &CharacterInfo.PositionX,
+		DB_TYPE_INT16, &CharacterInfo.PositionY,
+		DB_TYPE_INT16, &CharacterInfo.EquipmentCount,
+		DB_TYPE_DATA, &CharacterInfo.Equipment, sizeof(CharacterInfo.Equipment),
+		DB_TYPE_DATA, &CharacterInfo.EquipmentAppearance, sizeof(CharacterInfo.EquipmentAppearance),
+		DB_PARAM_END
+	)) {
+		assert(CharacterSlotIndex < MAX_CHARACTER_COUNT);
+		Response->Characters[CharacterSlotIndex] = CharacterInfo;
 	}
 
     IPCSocketUnicast(Socket, Response);

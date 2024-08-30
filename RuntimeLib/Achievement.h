@@ -37,14 +37,14 @@ struct _RTAchievementInfo {
     UInt16 EventTitle;
     UInt16 GuildTitle;
     UInt16 WarTitle;
-    Int32 AchievementCount;
-    Int32 AchievementRewardCount;
+    Int32 SlotCount;
+    Int32 RewardSlotCount;
 };
 
 struct _RTCharacterAchievementInfo {
     struct _RTAchievementInfo Info;
-    struct _RTAchievementSlot AchievementSlots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
-    struct _RTAchievementRewardSlot AchievementRewardSlots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
+    struct _RTAchievementSlot Slots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
+    struct _RTAchievementRewardSlot RewardSlots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
 };
 
 struct _RTAchievementExtendedRewardSlot {
@@ -54,12 +54,12 @@ struct _RTAchievementExtendedRewardSlot {
 };
 
 struct _RTAchievementExtendedInfo {
-    Int32 AchievementExtendedRewardCount;
+    Int32 SlotCount;
 };
 
 struct _RTCharacterAchievementExtendedInfo {
     struct _RTAchievementExtendedInfo Info;
-    struct _RTAchievementExtendedRewardSlot AchievementExtendedRewardSlots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
+    struct _RTAchievementExtendedRewardSlot Slots[RUNTIME_CHARACTER_MAX_ACHIEVEMENT_SLOT_COUNT];
 };
 
 #pragma pack(pop)

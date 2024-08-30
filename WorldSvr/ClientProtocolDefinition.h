@@ -221,52 +221,13 @@ CLIENT_PROTOCOL(S2C, INITIALIZE, EXTENDED, 142,
     UInt8 Unknown1A;
     S2C_DATA_INITIALIZE_SERVER Server;
     RTEntityID Entity;
-    UInt32 WorldIndex;
-    UInt32 DungeonIndex;
-    CSC_POSITION Position;
-    UInt64 Exp;
-    UInt64 Alz;
-    UInt64 Wexp;
-    Int32 Level;
-    UInt32 Unknown1;
-    UInt32 STR;
-    UInt32 DEX;
-    UInt32 INT;
-    UInt32 PNT;
-    Int32 SkillRank;
-    Int32 MagicSkillRank;
-    UInt64 BaseHP;
-    UInt64 CurrentHP;
-    UInt32 MaxMP;
-    UInt32 CurrentMP;
-    UInt16 MaxSP;
-    UInt16 CurrentSP;
-    UInt32 MaxRage;
-    UInt32 CurrentRage;
-    UInt32 MaxBP;
-    UInt32 CurrentBP;
-    Timestamp DPDuration;
-    UInt32 DP;
-    UInt32 SkillLevel;
-    UInt32 SkillExp;
-    UInt32 SkillPoint;
-    UInt64 RestExp;
-    UInt64 HonorPoint;
-    UInt64 DeathPenaltyExp;
-    UInt64 DeathPenaltyHp;
-    UInt32 DeathPenaltyMp;
-    UInt16 PKLevel;
+    struct _RTCharacterInfo CharacterInfo;
     S2C_DATA_INITIALIZE_SERVER_ADDRESS ChatServerAddress;
     S2C_DATA_INITIALIZE_SERVER_ADDRESS AuctionServerAddress;
     S2C_DATA_INITIALIZE_SERVER_ADDRESS PartyServerAddress;
     UInt16 UnknownPort;
-    UInt8 Nation;
-    UInt32 Unknown2;
-    UInt32 WarpMask;
-    UInt32 MapsMask;
-    UInt32 CharacterStyle;
-    UInt32 CharacterLiveStyle;
-    UInt8 Unknown14[282];
+    struct _RTCharacterStyleInfo CharacterStyleInfo;
+    UInt8 Unknown14[281];
     struct _RTEquipmentInfo EquipmentInfo;
     struct _RTInventoryInfo InventoryInfo;
     struct _RTVehicleInventoryInfo VehicleInventoryInfo;
@@ -314,7 +275,7 @@ CLIENT_PROTOCOL(S2C, INITIALIZE, EXTENDED, 142,
     struct _RTEventPassInfo EventPassInfo;
     struct _RTCostumeWarehouseInfo CostumeWarehouseInfo;
     struct _RTCostumeInfo CostumeInfo;
-    struct _RTExporationInfo ExplorationInfo;
+    struct _RTExplorationInfo ExplorationInfo;
     struct _RTAnimaMasteryInfo AnimaMasteryInfo;
     struct _RTCharacterPresetInfo PresetInfo;
     UInt8 NameLength;
@@ -2303,61 +2264,61 @@ CLIENT_PROTOCOL(S2C, NFY_EVENT_LIST, DEFAULT, 1008,
 
 CLIENT_PROTOCOL(C2S, CREATE_SUBPASSWORD, DEFAULT, 1030,
     Char Password[MAX_SUBPASSWORD_LENGTH + 1];
-    UInt32 Type;
-    UInt32 Question;
-    Char Answer[MAX_SUBPASSWORD_ANSWER_LENGTH + 1];
-    UInt8 Unknown2[111];
-    UInt32 Mode;
+    Int32 Type;
+    Int32 Question;
+    Char Answer[MAX_SUBPASSWORD_ANSWER_LENGTH];
+    Int32 IsChange;
 )
 
 CLIENT_PROTOCOL(S2C, CREATE_SUBPASSWORD, DEFAULT, 1030,
-    UInt32 Success;
-    UInt32 Mode;
-    UInt32 Type;
-    UInt32 Unknown1;
+    Int32 Success;
+    Int32 IsChange;
+    Int32 Type;
+    Int32 IsLocked;
 )
 
 CLIENT_PROTOCOL(C2S, CHECK_SUBPASSWORD, DEFAULT, 1032,
 )
 
 CLIENT_PROTOCOL(S2C, CHECK_SUBPASSWORD, DEFAULT, 1032,
-    UInt32 IsVerificationRequired;
+    Int32 IsVerificationRequired;
 )
 
 CLIENT_PROTOCOL(C2S, VERIFY_SUBPASSWORD, DEFAULT, 1034,
     Char Password[MAX_SUBPASSWORD_LENGTH + 1];
-    UInt32 Type;
-    UInt32 ExpirationInHours;
-    UInt8 Unknown1;
+    Int32 Type;
+    Int8 ExpirationInHours;
+    Int32 IsLocked;
 )
 
 CLIENT_PROTOCOL(S2C, VERIFY_SUBPASSWORD, DEFAULT, 1034,
-    UInt32 Success;
-    UInt8 FailureCount;
-    UInt32 Unknown1;
-    UInt32 Type;
+    Int32 Success;
+    Int8 FailureCount;
+    Int32 IsLocked;
+    Int32 Type;
 )
 
 CLIENT_PROTOCOL(C2S, VERIFY_DELETE_SUBPASSWORD, DEFAULT, 1040,
-    UInt32 Type;
+    Int32 Type;
     UInt8 Unknown1[65];
     Char Password[MAX_SUBPASSWORD_LENGTH + 1];
 )
 
 CLIENT_PROTOCOL(S2C, VERIFY_DELETE_SUBPASSWORD, DEFAULT, 1040,
-    UInt32 Success;
-    UInt8 FailureCount;
-    UInt32 Type;
+    Int32 Success;
+    Int8 FailureCount;
+    Int32 Type;
 )
 
 CLIENT_PROTOCOL(C2S, DELETE_SUBPASSWORD, DEFAULT, 1042,
-    UInt32 Type;
+    Int32 Type;
 )
 
 CLIENT_PROTOCOL(S2C, DELETE_SUBPASSWORD, DEFAULT, 1042,
-    UInt32 Success;
-    UInt32 Type;
+    Int32 Success;
+    Int32 Type;
 )
+
 CLIENT_PROTOCOL_ENUM(
     CSC_DATA_ABILITY_TYPE_ESSENCE = 1,
     CSC_DATA_ABILITY_TYPE_BLENDED = 2,
@@ -2726,7 +2687,7 @@ CLIENT_PROTOCOL(C2S, VERIFY_CREDENTIALS_SUBPASSWORD, DEFAULT, 2160,
 )
 
 CLIENT_PROTOCOL(S2C, VERIFY_CREDENTIALS_SUBPASSWORD, DEFAULT, 2160,
-    UInt8 Success;
+    Int8 Success;
     UInt32 Unknown1;
 )
 
@@ -3619,6 +3580,48 @@ CLIENT_PROTOCOL(S2C, FORCE_WING_GRADE_UP, DEFAULT, 2837,
 
 CLIENT_PROTOCOL(S2C, NFY_UPDATE_TRANSCENDENCE_POINTS, DEFAULT, 2926,
     UInt32 TranscendencePoints;
+)
+
+CLIENT_PROTOCOL(C2S, STELLAR_LINK_IMPRINT_SLOT, DEFAULT, 2936,
+    UInt8 GroupID;
+    UInt8 SlotLine;
+    UInt8 SlotIndex;
+    UInt32 MaterialCount;
+    UInt16 MaterialSlotCount1;
+    UInt16 MaterialSlotCount2;
+    UInt16 MaterialSlotIndex[0]; // MaterialSlotCount1 + MaterialSlotCount2
+)
+
+CLIENT_PROTOCOL(S2C, STELLAR_LINK_IMPRINT_SLOT, DEFAULT, 2936,
+    UInt8 GroupID;
+    UInt8 SlotLine;
+    UInt8 SlotIndex;
+    UInt8 StellarLinkGrade;
+    UInt32 StellarForceEffect; // See RuntimeLib/Force.h
+    UInt32 StellarForceValue;
+    UInt32 StellarForceValueType;
+    UInt32 ErrorCode;
+)
+
+CLIENT_PROTOCOL(C2S, STELLAR_LINK_TRANSFORM_LINK, DEFAULT, 2937,
+    UInt8 GroupID;
+    UInt8 SlotLine;
+    UInt8 SlotIndex;
+    UInt8 StellarLinkGrade;
+    UInt16 MaterialSlotCount1;
+    UInt16 MaterialSlotCount2;
+    UInt16 MaterialSlotIndex[0]; // MaterialSlotCount1 + MaterialSlotCount2
+)
+
+CLIENT_PROTOCOL(S2C, STELLAR_LINK_TRANSFORM_LINK, DEFAULT, 2937,
+    UInt8 GroupID;
+    UInt8 SlotLine;
+    UInt8 SlotIndex;
+    UInt8 StellarLinkGrade;
+    UInt32 StellarForceEffect; // See RuntimeLib/Force.h
+    Int32 StellarForceValue;
+    UInt32 StellarForceValueType;
+    UInt32 ErrorCode;
 )
 
 CLIENT_PROTOCOL(C2S, ROLL_FORCEWING_ARRIVAL_SKILL, DEFAULT, 2965,

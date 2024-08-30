@@ -1,4 +1,3 @@
-#include "AuthDB.h"
 #include "IPCProtocol.h"
 #include "IPCProcedures.h"
 
@@ -8,25 +7,23 @@ IPC_PROCEDURE_BINDING(W2L, VERIFY_PASSWORD) {
     Response->Header.Target = Packet->Header.Source;
     Response->Header.TargetConnectionID = Packet->Header.SourceConnectionID;
     Response->Success = false;
+    
+    Bool Success = false;
+    UInt8 PasswordHash[SALTED_HASH_LENGTH] = { 0 };
 
-    CString Password = (CString)Packet->Credentials;
-    Int32 PasswordLength = (Int32)strlen(Password);
-    AUTHDB_DATA_ACCOUNT Account = { 0 };
-    if (PasswordLength <= MAX_PASSWORD_LENGTH && AuthDBSelectAccountByID(Context->Database, Packet->AccountID, &Account)) {
-        if (Account.DeletedAt <= 0) {
-            Bool ValidCredentials = ValidatePasswordHash(
-                Password,
-                Account.Salt,
-                MAX_PASSWORD_SALT_LENGTH,
-                Account.Hash,
-                MAX_PASSWORD_HASH_LENGTH
-            );
+    if (!DatabaseCallProcedure(
+        Context->Database,
+        "GetPasswordHash",
+        DB_INPUT_INT32(Packet->AccountID),
+        DB_OUTPUT_BOOL(Success),
+        DB_OUTPUT_DATA(PasswordHash, SALTED_HASH_LENGTH),
+        DB_PARAM_END
+    )) {
+        Success = false;
+    }
 
-            AUTHDB_DATA_BLACKLIST Blacklist = { 0 };
-            if (ValidCredentials && !AuthDBSelectBlacklistByAccount(Context->Database, Account.ID, &Blacklist)) {
-                Response->Success = true;
-            }
-        }
+    if (Success && !ValidatePasswordHash(Packet->Credentials, PasswordHash)) {
+        Success = false;
     }
 
     IPCSocketUnicast(Server->IPCSocket, Response);
